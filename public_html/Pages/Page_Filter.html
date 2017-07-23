@@ -194,7 +194,7 @@ and open the template in the editor.
                  sprintId = document.getElementById("view_sprint").value, i,
                  countTotal=0, countFeature=0, countTask=0, countBug=0, 
                         countNew=0, countInProgress=0, countFeedback=0, countRework=0, countResolved=0;
-                for(i=0;i<issues.length;++i){c
+                for(i=0;i<issues.length;++i){
                     if(issues[i]["sprint"]===sprintId){
                         countTotal++;
                         switch(issues[i]["type"]){

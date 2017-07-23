@@ -263,6 +263,10 @@ and open the template in the editor.
                             return;
                         }
                     }
+                    if(type === "Task" && oldIssue["tasks"].length > 0){
+                        alert("Cannot change type of issue to task. It contains subtasks");
+                        return;
+                    }
                     updateAttribute(oldIssue["id"], "type", type);
                 }
                 

@@ -49,6 +49,9 @@ and open the template in the editor.
                     <th>
                         Resolved
                     </th>
+                    <th>
+                        Ready for Testing
+                    </th>
                 </tr>
                 <tr>
                     <td id="countTotal">0</td>
@@ -60,6 +63,7 @@ and open the template in the editor.
                     <td id="countFeedback">0</td>
                     <td id="countRework">0</td>
                     <td id="countResolved">0</td>
+                    <td id="countReady">0</td>
                 </tr>
             </table>
 
@@ -193,7 +197,7 @@ and open the template in the editor.
                 var issues = getItem("issues"),
                  sprintId = document.getElementById("view_sprint").value, i,
                  countTotal=0, countFeature=0, countTask=0, countBug=0, 
-                        countNew=0, countInProgress=0, countFeedback=0, countRework=0, countResolved=0;
+                        countNew=0, countInProgress=0, countFeedback=0, countRework=0, countResolved=0, countReady=0
                 for(i=0;i<issues.length;++i){
                     if(issues[i]["sprint"]===sprintId){
                         countTotal++;
@@ -225,6 +229,9 @@ and open the template in the editor.
                             case "4":
                                 countResolved++;
                                 break;
+                            case "5":
+                                countReady++;
+                                break;
                             default:
                                 break;
                         }
@@ -240,6 +247,8 @@ and open the template in the editor.
                 document.getElementById("countFeedback").innerHTML = countFeedback;
                 document.getElementById("countRework").innerHTML = countRework;
                 document.getElementById("countResolved").innerHTML = countResolved;
+                document.getElementById("countReady").innerHTML = countReady;
+                
             }
             
             function showDetails(row){

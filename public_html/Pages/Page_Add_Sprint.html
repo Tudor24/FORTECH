@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Add New Sprint</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src = "../Scripts/GenerateId.js"></script>
+        <link rel="stylesheet" type="text/css" href="../CSS/CSS_Add_Sprint.css"/>
+        <script type="text/javascript" src = "../Scripts/GlobalGetSet.js"></script>
+    </head>
+    <body onload="updateData()">
+        <p>Add Sprint</p>
+        <br>
+
+        Name: <input type="text" id="nameSprint" value="">
+        <button onclick="addSprint()">Add new Sprint</button>
+        <p>Click the button to add new Sprint.</p>
+        
+        Sprint names:
+        <p id="add_sprintNames">-</p>
+        
+        <script>
+            function addSprint(){
+                var name = document.getElementById("nameSprint").value;
+                if(name!==""){
+                    var id = getId(),
+                    sprint = {id:id, name: name};
+                    if(!("projects" in localStorage)){//dont have any projects
+                        var projectSprints=[sprint['id']];
+                        project={id:1, sprints:projectSprints};
+                        projects=[project];
+                        setItem("projects", projects);
+                    }
+                    if(!("sprints" in localStorage)){//don't have sprints
+                        var sprints=[sprint];
+                        setItem("sprints", sprints);
+                    }
+                    var projects = getItem("projects"),
+                        projectSprints = projects[0]['sprints'];
+                        projectSprints.push(sprint['id']);
+                    projects[0]['sprints'] = projectSprints;
+                    setItem("projects", projects);
+                    var sprints = getItem("sprints");
+                    sprints.push(sprint);
+                    setItem("sprints", sprints);
+                    document.getElementById("nameSprint").value="";
+                    updateData();
+                }
+                else
+                {
+                    alert('Name must not be empty!');
+                }
+            }
+            
+            function updateData(){//update shown sprints - each time we add a new one
+                var sprints = getItem("sprints"),
+                text="", i;
+                for(i=0;i<sprints.length;++i){
+                    text += sprints[i]['name'] + '<br>';
+                }
+                document.getElementById("add_sprintNames").innerHTML = text;
+            }
+        </script>
+    </body>
+</html>

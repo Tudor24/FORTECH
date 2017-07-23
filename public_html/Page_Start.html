@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Project Management Tool</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="CSS/CSS_Start.css">
+        <script type="text/javascript" src = "Scripts/GenerateId.js"></script>
+        <script type="text/javascript" src = "Scripts/GlobalFunctions.js"></script>
+        <script type="text/javascript" src = "Scripts/GlobalGetSet.js"></script>
+    </head>
+    <body onload="addDefaultData()">
+        <div>
+            <h1>Project Management Tool</h1>
+        </div>
+        <div>Main Page</div>
+        <br>
+        Add user: <input type="text" id="addUser">
+        <button onClick="addUser()">Add User</button>
+        <select id="selectUserId"><option>-</option></select>
+        <button onClick="setCurrentUser()">Set User</button>
+        <br>
+        <ul>
+            <li><a href="Pages/Page_Add_Sprint.html">Add new Sprint</a></li>
+            <li><a href="Pages/Page_Add_Issue.html">Add new Issue</a></li>
+            <li><a href="Pages/Page_Update.html">Update Issue</a></li>
+            <li><a href="Pages/Page_Filter.html">Filter Issues</a></li>
+        </ul>
+        <script>
+            function addDefaultData(){
+                //localStorage.clear();
+                if(!("users" in localStorage)){
+                    user={id: '1', name:'Default'};
+                    users=[user];
+                    setItem("users", users);
+                    loadOptions("users", "id", "selectUserId");
+                    setItem("currentUser", ["1"]);
+                }
+                if(!("projects" in localStorage)){
+                    project={id:1, sprints:[]};
+                    projects=[project];
+                    setItem("projects", projects);
+                }
+            }
+            
+            function addUser(){
+                var username = document.getElementById("addUser").value;
+                var users = getItem("users");
+                var user = {id: getId(), name: username};
+                users.push(user);
+                setItem("users", users);
+                document.getElementById("addUser").value = "";
+                loadOptions("users", "id", "selectUserId");
+            }
+            
+            function setCurrentUser(){
+                var userId = document.getElementById("selectUserId").value;
+                if(userId !== "-"){
+                    setItem("currentUser", [userId.toString()]);
+                }
+                else{
+                    alert('Wrong id was selected. Set default user.');
+                    setItem("currentUser", "1");
+                }
+            }
+        </script>
+    </body>
+</html>

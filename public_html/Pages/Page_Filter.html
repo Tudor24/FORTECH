@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Filter Issues</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="../CSS/CSS_Filter.css"/>
+        <script type="text/javascript" src = "../Scripts/Global.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalGetSet.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalFunctions.js"></script>
+    </head>
+    <body onload="loadAll()">
+        <div>
+            <p>Select sprint to view statistics</p>
+            <select id="view_sprint" onchange="showStatistics()">
+                <option selected disabled hidden> --select a sprint-- </option>
+            </select><br>
+            <table style="width:100%" id="statsTable">
+                <tr style="background-color: lightgray">
+                    <th>
+                        Total
+                    </th>
+                    <th>
+                        Feature
+                    </th>
+                    <th>
+                        Task
+                    </th>
+                    <th>
+                        Bug
+                    </th>
+                    <th>
+                        New
+                    </th>
+                    <th>
+                        In Progress
+                    </th>
+                    <th>
+                        Feedback
+                    </th>
+                    <th>
+                        Rework
+                    </th>
+                    <th>
+                        Resolved
+                    </th>
+                </tr>
+                <tr>
+                    <td id="countTotal">0</td>
+                    <td id="countFeature">0</td>
+                    <td id="countTask">0</td>
+                    <td id="countBug">0</td>
+                    <td id="countNew">0</td>
+                    <td id="countInProgress">0</td>
+                    <td id="countFeedback">0</td>
+                    <td id="countRework">0</td>
+                    <td id="countResolved">0</td>
+                </tr>
+            </table>
+
+            <p>Filter Issues</p>
+            Select Status: <select id="select_status" onchange="updateData()">
+                <option >-</option>
+            </select> 
+
+            Select Sprint: <select id="select_sprint" onchange="updateData()">
+                <option >-</option>
+            </select>
+
+            Select Type: <select id="select_type" onchange="updateData()">
+                <option>-</option>
+            </select>
+            <br>
+            <br>
+            <table style="width:100%" id="filterTable">
+                <tr style="background-color: lightgray">
+                    <th>
+                        Id
+                    </th>
+                    <th>
+                        Type
+                    </th>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Sprint
+                    </th>
+                    <th>
+                        Created By
+                    </th>
+                    <th>
+                        Assignee
+                    </th>
+                    <th>
+                        Status
+                    </th>
+                    <th>
+                        Updated At
+                    </th>
+                    <th>
+                        Created At
+                    </th>
+                    <th>
+                        Parent Task
+                    </th>
+                </tr>
+            </table>
+
+            <p>Click on a row to view description, comments and tasks for the issue.</p>
+            <textarea rows="20" cols="100" id="commentText" readonly></textarea>
+        </div>
+        <script>
+            function loadData(){
+                //load type
+                loadOptions(getFixedType(), "-", "select_type");
+                //load status
+                loadOptions(getFixedStatus(), "-", "select_status");
+                //load sprints - both
+                loadOptions(getItem("sprints"), "id", "select_sprint");
+                loadOptions(getItem("sprints"), "id", "view_sprint");
+            }
+            
+            function updateData(){
+                var status = document.getElementById("select_status").value,
+                    sprint = document.getElementById("select_sprint").value,
+                    type = document.getElementById("select_type").value;
+                
+                var issues = getItem("issues");
+                if(status !== "-"){//filter by status - get status id by name
+                    var statusId = getFixedStatus().indexOf(status);
+                    if(statusId > -1){
+                        issues = issues.filter(function (el) {
+                            return el.status === statusId.toString();
+                        });
+                    }
+                }
+                if(sprint !== "-"){//filter by sprint
+                   issues = issues.filter(function (el) {
+                        return el.sprint === sprint;
+                    });
+                }
+                if(type !== "-"){//filter by type
+                    issues = issues.filter(function (el) {
+                        return el.type === type;
+                    });
+                }
+                updateTable(issues);
+            }
+            
+            function updateTable(data){
+                clearTable();
+                var tbl = document.getElementById("filterTable"), i, j,
+                 fields = getFixedIssueFieldsFilter(),
+                 status = getFixedStatus();
+                for(i=0;i<data.length;++i){
+                    var row = tbl.insertRow(tbl.rows.length);
+                    row.setAttribute("onclick", "showDetails(this)");
+                    for(j=0;j<getFixedIssueFieldsFilter().length-1;++j){
+                        var cell = row.insertCell(j);
+                        if(fields[j] === "status"){//set name of status from value
+                            cell.innerHTML=status[data[i][fields[j]]];
+                        }
+                        else{//set value 
+                            cell.innerHTML=data[i][fields[j]];
+                        }       
+                    }
+                    //for each row set the parent column value if it exists
+                    var cell = row.insertCell(getFixedIssueFieldsFilter().length-1);
+                    var parentId=searchParent(data[i]["id"]);
+                    cell.innerHTML=parentId;
+                }
+            }
+            
+            function clearTable(){
+                var tbl = document.getElementById("filterTable");
+                while(tbl.rows.length > 1){
+                    tbl.deleteRow(tbl.rows.length-1);
+                }
+            }
+            
+            function loadAll(){
+                loadData();
+                updateData();
+            }
+            
+            function showStatistics(){
+                var issues = getItem("issues"),
+                 sprintId = document.getElementById("view_sprint").value, i,
+                 countTotal=0, countFeature=0, countTask=0, countBug=0, 
+                        countNew=0, countInProgress=0, countFeedback=0, countRework=0, countResolved=0;
+                for(i=0;i<issues.length;++i){c
+                    if(issues[i]["sprint"]===sprintId){
+                        countTotal++;
+                        switch(issues[i]["type"]){
+                            case "Task":
+                                countTask++;
+                                break;
+                            case "Feature":
+                                countFeature++;
+                                break;
+                            case "Bug":
+                                countBug++;
+                            default:
+                                break;
+                        }
+                        switch(issues[i]["status"]){
+                            case "0":
+                                countNew++;
+                                break;
+                            case "1":
+                                countInProgress++;
+                                break;
+                            case "2":
+                                countFeedback++;
+                                break;
+                            case "3":
+                                countRework++;
+                                break;
+                            case "4":
+                                countResolved++;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }//finish getting data
+                //set data
+                document.getElementById("countTotal").innerHTML = countTotal;
+                document.getElementById("countFeature").innerHTML = countFeature;
+                document.getElementById("countTask").innerHTML = countTask;
+                document.getElementById("countBug").innerHTML = countBug;
+                document.getElementById("countNew").innerHTML = countNew;
+                document.getElementById("countInProgress").innerHTML = countInProgress;
+                document.getElementById("countFeedback").innerHTML = countFeedback;
+                document.getElementById("countRework").innerHTML = countRework;
+                document.getElementById("countResolved").innerHTML = countResolved;
+            }
+            
+            function showDetails(row){
+                var id = row.cells[0].innerHTML,
+                 cmts = getItem("comments"),
+                 issues = getItem("issues"),
+                 comments=[], tasks=[], description="", i;
+                for(i=0;i<issues.length;++i){//found correct issue
+                    if(issues[i]["id"] === id){
+                        comments = issues[i]["comments"];
+                        tasks = issues[i]["tasks"];
+                        description = issues[i]["description"];
+                        break;
+                    }
+                }
+                var textArea = "Description: \n" + description + "\n \nTasks:\n";
+                for(i=0;i<tasks.length;++i){
+                    textArea += tasks[i]+"\n";
+                }
+                textArea += "\n \nComments:\n\n";
+                for(i=0;i<cmts.length;++i){
+                    if(comments.indexOf(cmts[i]["id"]) > -1){
+                        textArea += cmts[i]["id"] + ":\n" + cmts[i]["name"]+"\n\n";
+                    }
+                }
+                document.getElementById("commentText").value = textArea;
+            }
+            
+            
+            
+        </script>
+    </body>
+</html>

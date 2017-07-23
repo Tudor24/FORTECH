@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Add new issue</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="../CSS/CSS_Add_Issue.css"/>
+        <script type="text/javascript" src = "../Scripts/Global.js"></script>
+        <script type="text/javascript" src = "../Scripts/GenerateId.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalGetSet.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalFunctions.js"></script>
+    </head>
+    <body onload = "loadData()">
+        
+        <br>
+        <div id="addDiv">
+            <p>ADD ISSUE</p>
+            Parent Id<br> <select id="add_parentSprint" >
+                <option>-</option>
+            </select> (Only if it is a subtask)<br>
+            Type <br><select id="add_typeSprint"></select><br>
+            Name <br><input type="text" id="add_nameSprint" value=""><br>
+            Sprint <br><select id="add_sprintSprint"></select><br>
+            Assignee <br><select id="add_assigneeSprint" ></select><br>
+            Description <br><input type="text" id="add_descriptionSprint" value="">
+            <p>Click the button to add new Issue.</p>
+            <button onclick="addIssue()">Add new Issue</button>
+             <br>
+        </div>
+        <br>
+        
+        Issue Id <select id="add_commentSprint">
+            <option>-</option>
+        </select>
+        <button onclick="addComment()">Add new Comment</button>
+        <br>
+        <textarea rows="4" cols="50" name="comment" id="add_commentText"></textarea>
+        <script>
+            function loadData(){
+                //load types
+                loadOptions(getFixedType(), "-", "add_typeSprint");
+                //load sprints
+                loadOptions(getItem("sprints"), "name", "add_sprintSprint");
+                //load parent ids
+                loadOptions(getItem("issues"), "id", "add_parentSprint");
+                //load ids for comments
+                loadOptions(getItem("issues"), "id", "add_commentSprint");
+                //load users assignee
+                loadOptions(getItem("users"), "id", "add_assigneeSprint");
+            }
+            
+            function addIssue(){
+                    var id=getId();
+                    var parent = document.getElementById("add_parentSprint");
+                    var typ = document.getElementById("add_typeSprint");
+                    var assign = document.getElementById("add_assigneeSprint");
+                    var sprt = document.getElementById("add_sprintSprint");
+                    
+                    var parentId = parent.options[parent.selectedIndex].value;
+                    var type = typ.options[typ.selectedIndex].value;
+                    var createdBy = getItem("currentUser");
+                    var assignee = assign.options[assign.selectedIndex].value;
+                    var sprintId = "-1";
+                    try{
+                        var sprintName = sprt.options[sprt.selectedIndex].value;
+                    }
+                    catch(err){
+                        alert("Invalid name");
+                        return;
+                    }
+                    
+                    var description = document.getElementById("add_descriptionSprint").value;
+                    var name = document.getElementById("add_nameSprint").value;
+                    
+                    var status = getFixedStatus().indexOf("New").toString();
+                    var currentDate = getDate();
+                    var updatedAt=currentDate, createdAt = currentDate;
+                    var sprints = getItem("sprints");
+                    
+                    for(var j=0;j<sprints.length;++j){//get sprint id by name
+                        if(sprints[j]["name"] === sprintName){
+                            sprintId = sprints[j]["id"];
+                            break;
+                        }
+                    }
+                    
+                    if(sprintId === "-1"){
+                        alert("Selected sprint is not valid");
+                        return;
+                    }
+                    
+                    if(name === ""){
+                        alert("Name must not be empty!");
+                        return;
+                    }
+                    
+                    if(parentId !== "-" && type !== "Task"){
+                        alert("Feature or Bug cannot be subtask");
+                        return;
+                    }
+                    
+                    if(parentId !== "-" && type === "Task"){//add it as subtask to parent task list
+                        var existingIssues = getItem("issues"), i;
+                        var foundParent = false;
+                        for(i=0;i<existingIssues.length;++i){
+                            if(existingIssues[i]["id"] === parentId){//found correct parent issue
+                                foundParent = true;
+                                if(existingIssues[i]["sprint"] !== sprintId){//check if subtask same sprint as parent
+                                    alert("Subtask cannot be in different sprint as parent");
+                                    return;
+                                }
+                                if(existingIssues[i]["type"] === "Task"){//check if parent is feature or bug - not subtask
+                                    alert("Task cannot contain another task!");
+                                    return;
+                                }
+                                var tasks = existingIssues[i]["tasks"];//add task to parent list
+                                tasks.push(id);
+                                existingIssues[i]["tasks"] = tasks;
+                                setItem("issues", existingIssues);
+                                break;
+                            }
+                        }
+                        
+                        if(!foundParent){
+                            alert("Parent issue not valid");
+                            return;
+                        }
+                    }
+                    
+                    var issues = getItem("issues"), 
+                     issue = {id:id, type:type, name:name, sprint:sprintId, createdBy:createdBy, assignee:assignee, description:description,
+                    status:status, tasks:[], comments:[], updatedAt:updatedAt, createdAt:createdAt};
+                    issues.push(issue);
+                    setItem("issues", issues);
+                    loadOptions(getItem("issues"), "id", "add_commentSprint");
+                    clearData();
+            }
+            
+            function addComment(){
+                var id = getId(),
+                 commentText = document.getElementById("add_commentText").value,
+                 issueSelect = document.getElementById("add_commentSprint"),
+                 issueId = issueSelect.options[issueSelect.selectedIndex].value;
+                if(issueId !== "-"){
+                    if("issues" in localStorage){
+                        var issues = getItem("issues"), i;
+                        for(i=0;i<issues.length;++i){
+                            if(issues[i]["id"] === issueId){
+                                var comments = issues[i]["comments"];
+                                comments.push(id);
+                                issues[i]["comments"] = comments;
+                                setItem("issues", issues);
+                                break;
+                            }
+                        }
+                        var comment = {id:id, name: commentText};
+                        var comments = getItem("comments");
+                        comments.push(comment);
+                        setItem("comments", comments);
+                        document.getElementById("add_commentText").value="";
+                    }
+                    else{
+                        alert("Selected issue is not valid");
+                    }
+                }
+                else{
+                    alert("Id of issue is not valid.");
+                }
+            }
+            
+            function clearData(){
+                document.getElementById("add_nameSprint").value = "";
+                document.getElementById("add_descriptionSprint").value = "";
+            }
+        </script>
+    </body>
+</html>

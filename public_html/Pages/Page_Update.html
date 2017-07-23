@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+
+-->
+<html>
+    <head>
+        <title>Update Issue</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="../CSS/CSS_Update.css"/>
+        <script type="text/javascript" src = "../Scripts/Global.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalGetSet.js"></script>
+        <script type="text/javascript" src = "../Scripts/GlobalFunctions.js"></script>
+    </head>
+    <body onload="loadData()">
+        <p>Update Issue</p>
+        <select id="updateSelectId" onchange="changeDisplayData()">
+            <option selected disabled hidden> --select an issue-- </option>
+        </select>
+        <button id="updateButton" onclick="updateData()">Update data</button>
+        <br>
+        <br>
+        <textarea style="width:100%;" rows="20" id="updateDescription"></textarea>
+         <br>
+        Name: <input type="text" id="updateName"><br>
+        <br>
+        Sprint: <select id="updateSprint">
+                <option >-</option>
+            </select>
+        <br>
+        <br>
+        Assignee: <select id="updateAssignee">
+                <option >-</option>
+            </select>
+        <br>
+        <br>
+        Status: <select id="updateStatus">
+                <option >-</option>
+            </select>
+        <br>
+        <br>
+        Type <select id="updateType">
+                <option >-</option>
+            </select>
+        <br>
+        <br>
+        Tasks: <select id="updateTasks">
+                <option >-</option>
+            </select>
+        <button id="deleteTaskUpdate" onclick="deleteSubtask()">Delete Task</button>
+        <br>
+        <br>
+        <br>
+        Comments: <select id="updateComments" onchange="showComment()">
+                <option >-</option>
+            </select>
+        <button id="updateCommentUpdate" onclick="updateCmt()">Update comment</button>
+        <button id="updateCommentDelete" onclick="deleteCmt()">Delete comment</button>
+        <br>
+        <br>
+        <br>
+        <textarea style="width:100%;" rows="20" id="updateCommentText"></textarea>
+        <br>
+        <br>
+        <script>
+            function loadData(){
+                loadOptions("issues", "id", "updateSelectId");
+                loadOptions("sprints", "id", "updateSprint");
+                loadOptions("users", "id", "updateAssignee");
+                loadOptions(getFixedStatus(), "-", "updateStatus");
+                loadOptions(getFixedType(), "-", "updateType");
+            }
+            
+            function changeDisplayData(){
+                var issues = getItem("issues"), i;
+                var selectItem = document.getElementById("updateSelectId");
+                var id = selectItem.options[selectItem.selectedIndex].value;
+                var oldIssue = {};
+                for(i=0;i<issues.length;++i){
+                    if(issues[i]["id"] === id){
+                        oldIssue = issues[i];
+                        break;
+                    }
+                }
+                if(oldIssue !=={}){
+                    var type=oldIssue["type"], name=oldIssue["name"], sprint=oldIssue["sprint"],
+                            assignee=oldIssue["assignee"], status=oldIssue["status"], description=oldIssue["description"],
+                            tasks=oldIssue["tasks"], comments=oldIssue["comments"], type = oldIssue["type"];
+                    loadOptions(tasks, "-", "updateTasks");
+                    loadOptions(comments, "-", "updateComments");
+                    document.getElementById("updateName").value = name;
+                    document.getElementById("updateDescription").value = description;
+                    changeSelectedOptions(sprint, "updateSprint");
+                    changeSelectedOptions(assignee, "updateAssignee");
+                    changeSelectedOptions(getFixedStatus()[status], "updateStatus");
+                    changeSelectedOptions(type, "updateType");
+                }
+                else{
+                    alert("Selected id is not valid");
+                }
+            }
+
+            function changeSelectedOptions(option, elementTag){
+                var element = document.getElementById(elementTag), i;
+                for(i=0;i<element.options.length;++i){
+                    if(element.options[i].innerHTML === option){
+                        element.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            function updateCmt(){
+                var select = document.getElementById("updateComments"),
+                 id = select.options[select.selectedIndex].value,
+                 text = document.getElementById("updateCommentText").value,
+                 comments = getItem("comments"), i;
+                for(i=0;i<comments.length;++i){
+                    if(comments[i]["id"] === id){
+                        comments[i]["name"] = text;
+                        setItem("comments", comments);
+                        break;
+                    }
+                }
+            }
+            
+            function deleteCmt(){
+                var select = document.getElementById("updateComments");
+                var id = select.options[select.selectedIndex].value;
+                var comments = getItem("comments");
+                for(i=0;i<comments.length;++i){
+                    if(comments[i]["id"] === id){
+                        comments.splice(i,1);
+                        setItem("comments", comments);
+                        break;
+                    }
+                }
+                //search for parent issue of comment
+                var issues = getItem("issues"), j;
+                for(j=0;j<issues.length;j++){
+                    var cmts = issues[j]["comments"];
+                    var k = cmts.indexOf(id);
+                    if(k > -1){
+                        cmts.splice(k,1);
+                        issues[j]["comments"] = cmts;
+                        setItem("issues", issues);
+                        document.getElementById("updateCommentText").value="";
+                        loadOptions(cmts, "-", "updateComments");
+                        break;
+                    }
+                }
+            }
+            
+            function showComment(){
+                var select = document.getElementById("updateComments"),
+                 id = select.options[select.selectedIndex].value,
+                 textArea = document.getElementById("updateCommentText"),
+                 i, commentText="",
+                 comments = getItem("comments");
+                for(i=0;i<comments.length;++i){
+                    if(comments[i]["id"] === id){
+                        commentText = comments[i]["name"];
+                        break;
+                    }
+                }
+                textArea.value = commentText;
+            }
+            
+            function deleteSubtask(){
+                var selectedTask = document.getElementById("updateTasks").value,  i,
+                issues = getItem("issues");
+                for(i=0;i<issues.length;++i){
+                    var taskIndex = issues[i]["tasks"].indexOf(selectedTask);
+                    if(taskIndex > -1){
+                        issues[i]["tasks"].splice(taskIndex, 1);
+                        break;
+                    }
+                }
+                for(i=0;i<issues.length;++i){
+                    if(issues[i]["id"] === selectedTask){
+                        issues.splice(i, 1);
+                        break;
+                    }
+                }
+                setItem("issues", issues);
+                //reload tasks
+                loadOptions("issues", "id", "updateSelectId");              
+                //reload subtasks
+                var selectItem = document.getElementById("updateSelectId");
+                var id = selectItem.options[selectItem.selectedIndex].value;
+                for(var q=0;q<issues.length;++q){
+                    if(issues[q]["id"] === id){
+                        loadOptions(issues[q]["tasks"], "-", "updateTasks");
+                        break;
+                    }
+                }
+            }
+            
+            function updateData(){
+                var desc = document.getElementById("updateDescription").value,
+                    name = document.getElementById("updateName").value;
+                    sprint = document.getElementById("updateSprint").value, 
+                    assignee = document.getElementById("updateAssignee").value,
+                    status = document.getElementById("updateStatus").value,
+                    type = document.getElementById("updateType").value,
+                    issues = getItem("issues"), i,
+                    selectItem = document.getElementById("updateSelectId"),
+                    id = selectItem.options[selectItem.selectedIndex].value,
+                    oldIssue = {id:"-1"};
+                for(i=0;i<issues.length;++i){
+                    if(issues[i]["id"] === id){
+                        oldIssue = issues[i];
+                        break;
+                    }
+                }
+                
+                if(oldIssue["id"] === "-1"){
+                    alert("Invalid issue.");
+                    return;
+                }
+                
+                //for all update date
+                if(oldIssue["description"] !== desc)
+                    updateAttribute(oldIssue["id"], "description", desc);
+               
+                if(oldIssue["name"] !== name)
+                    updateAttribute(oldIssue["id"], "name", name);
+                
+                if(oldIssue["assignee)"] !== assignee)
+                    updateAttribute(oldIssue["id"], "assignee", assignee);
+                
+                if(oldIssue["sprint"] !== sprint){
+                    //check if subtask
+                    var issues = getItem("issues");
+                        for(var i=0;i<issues.length;++i){
+                            var parentIndex = issues[i]["tasks"].indexOf(oldIssue["id"]);
+                            if(parentIndex > -1){//found parent issue
+                                //i is the index of parent
+                                if(issues[i]["sprint"] !== sprint){
+                                    alert("Task sprint cannt be different from parent sprint.");
+                                    return;
+                                }
+                            }
+                        }
+                    updateAttribute(oldIssue["id"], "sprint", sprint);
+                    if(oldIssue["tasks"].length > 0){//change sprint for all subtasks
+                        var k, lenTasks = oldIssue["tasks"].length;
+                        for(k=0;k<lenTasks;++k){
+                            updateAttribute(oldIssue["tasks"][k], "sprint", sprint);
+                        }
+                    }
+                }
+                
+                if(oldIssue["type"] !== type){//cant change type if subtask
+                    var issues = getItem("issues"), i;
+                    for(i=0;i<issues.length;++i){
+                        var index = issues[i]["tasks"].indexOf(oldIssue["id"]);
+                        if(index > -1){
+                            alert("Cannot change type of subtask");
+                            return;
+                        }
+                    }
+                    updateAttribute(oldIssue["id"], "type", type);
+                }
+                
+                if(oldIssue["status"] !== status){
+                    if(oldIssue["status"] === "0"){//As soon as a task changes its status from New to any other, it"s corresponding issue will change it"s status as well to it"s parent status.
+                        var lengthIssues = oldIssue["tasks"].length;
+                        if(lengthIssues > 0){
+                            var i;
+                            for(i=0;i<lengthIssues;++i){
+                                updateAttribute(oldIssue["tasks"][i], "status", getFixedStatus().indexOf(status).toString());
+                            }
+                        }
+                    }
+                    updateAttribute(oldIssue["id"], "status", getFixedStatus().indexOf(status).toString());//update current task status
+                    //Completing all the tasks of a bug or feature will change the status of that issue to Ready For Testing.
+                    if(type === "Task"){//check if current task is subtask - find parent task - check all subtasks if all subtasks are resolved, change status to ready for testing
+                        var issues = getItem("issues");
+                        for(var i=0;i<issues.length;++i){
+                            var parentIndex = issues[i]["tasks"].indexOf(id);
+                            if(parentIndex > -1){//found parent issues - check all other subtasks
+                                console.log("found parent index" + parentIndex);
+                                var parentId = issues[i]["id"],
+                                 subtasks = issues[i]["tasks"],
+                                 readyToTest = true;
+                                 
+                                for(var k=0;k<issues.length;++k){
+                                    if(subtasks.indexOf(issues[k]["id"]) > -1 && issues[k]["status"] !== getFixedStatus().indexOf("Resolved").toString()){
+                                        console.log("task is not ready" + subtasks[k]);
+                                        readyToTest = false;
+                                        break;
+                                    }
+                                }
+                                if(readyToTest){//change parent status to ready to test
+                                    updateAttribute(parentId, "status", getFixedStatus().indexOf("Ready For Testing").toString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            function updateAttribute(id, attribute, newValue){
+                var issues = getItem("issues"), i;
+                for(i=0;i<issues.length;++i){
+                    if(issues[i]["id"] === id){
+                        issues[i][attribute] = newValue;
+                        setItem("issues", issues);
+                        updateDate(i);
+                        break;
+                    }
+                }
+            }
+            
+            function updateDate(index){
+                var issues = getItem("issues");
+                issues[index]["updatedAt"] = getDate();
+                setItem("issues", issues);
+            }
+        </script>
+    </body>
+</html>
